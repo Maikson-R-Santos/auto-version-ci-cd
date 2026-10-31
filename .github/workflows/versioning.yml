@@ -1,0 +1,38 @@
+﻿name: Versionamento Automatico
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  versionamento:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar repositorio
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Incrementar versao
+        shell: bash
+        run: |
+          VERSION=$(cat version.txt)
+          VERSION=${VERSION#v}
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+          PATCH=$((PATCH + 1))
+          echo "v$MAJOR.$MINOR.$PATCH" > version.txt
+          cat version.txt
+
+      - name: Commit automatico
+        run: |
+          git config user.name "CI Bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add version.txt
+          git commit -m "CI: incremento automatico de versao [skip ci]"
+          git push
